@@ -1,2 +1,1 @@
-# dsj23
-code repository for dsj23.me
+# Code repository for dsj23.me
