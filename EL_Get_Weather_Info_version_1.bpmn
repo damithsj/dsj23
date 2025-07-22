@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="sample-diagram" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="EL_Get_Weather_Info" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_10470xc</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Activity_1q08on6" name="Show Weather Info" camunda:formKey="formWeatherInfo">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="ifsBpaUserTaskIsHeader">true</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaUserTaskHeaderLocale">
+            <camunda:map>
+              <camunda:entry key="en">Weather Info</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaUserTaskIsCancel">true</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaImplFormFieldCity">
+            <camunda:map>
+              <camunda:entry key="en">City</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaImplFormField_CurrentTemp">
+            <camunda:map>
+              <camunda:entry key="en">Current Temperature</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaImplFormField_1Hr">
+            <camunda:map>
+              <camunda:entry key="en">1 hour Forecast</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaImplFormField_6Hr">
+            <camunda:map>
+              <camunda:entry key="en">6 hour Forecast</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaImplFormField_12Hr">
+            <camunda:map>
+              <camunda:entry key="en">12 hour Forecast</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+        <camunda:formData>
+          <camunda:formField id="FormFieldCity" type="string" defaultValue="${locationCity}">
+            <camunda:properties>
+              <camunda:property id="optional" value="true" />
+              <camunda:property id="readonly" value="true" />
+            </camunda:properties>
+          </camunda:formField>
+          <camunda:formField id="FormField_CurrentTemp" type="string" defaultValue="${varWeatherForecastNow}">
+            <camunda:properties>
+              <camunda:property id="optional" value="true" />
+              <camunda:property id="readonly" value="true" />
+            </camunda:properties>
+          </camunda:formField>
+          <camunda:formField id="FormField_1Hr" type="string" defaultValue="${varWeather1HrSummary}">
+            <camunda:properties>
+              <camunda:property id="optional" value="true" />
+              <camunda:property id="readonly" value="true" />
+            </camunda:properties>
+          </camunda:formField>
+          <camunda:formField id="FormField_6Hr" type="string" defaultValue="${varWeather6HrSummary}">
+            <camunda:properties>
+              <camunda:property id="optional" value="true" />
+              <camunda:property id="readonly" value="true" />
+            </camunda:properties>
+          </camunda:formField>
+          <camunda:formField id="FormField_12Hr" type="string" defaultValue="${varWeather12HrSummary}">
+            <camunda:properties>
+              <camunda:property id="optional" value="true" />
+              <camunda:property id="readonly" value="true" />
+            </camunda:properties>
+          </camunda:formField>
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_12b96ic</bpmn:incoming>
+      <bpmn:outgoing>Flow_0sumxg8</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:scriptTask id="Activity_1qdztrj" name="parse weather info" scriptFormat="JavaScript">
+      <bpmn:incoming>Flow_0iot9wx</bpmn:incoming>
+      <bpmn:outgoing>Flow_12b96ic</bpmn:outgoing>
+      <bpmn:script>// Mapping based on YR Weather Symbols (ChatGPT)
+var weatherSymbolMappings = {
+    "clearsky_day": "clear sky",
+    "clearsky_night": "clear sky",
+    "clearsky_polartwilight": "clear sky",
+    "partlycloudy_day": "partly cloudy",
+    "partlycloudy_night": "partly cloudy",
+    "partlycloudy_polartwilight": "partly cloudy",
+    "cloudy": "cloudy",
+    "fair_day": "fair",
+    "fair_night": "fair",
+    "fair_polartwilight": "fair",
+    "fog": "foggy",
+    "heavyrain": "heavy rain",
+    "heavyrain_and_thunder": "heavy rain and thunder",
+    "heavyrainshowers_day": "heavy rain showers",
+    "heavyrainshowers_night": "heavy rain showers",
+    "heavyrainshowers_polartwilight": "heavy rain showers",
+    "heavyrainshowers_and_thunder_day": "heavy rain showers and thunder",
+    "heavyrainshowers_and_thunder_night": "heavy rain showers and thunder",
+    "heavyrainshowers_and_thunder_polartwilight": "heavy rain showers and thunder",
+    "heavysleet": "heavy sleet",
+    "heavysleet_and_thunder": "heavy sleet and thunder",
+    "heavysleetshowers_day": "heavy sleet showers",
+    "heavysleetshowers_night": "heavy sleet showers",
+    "heavysleetshowers_polartwilight": "heavy sleet showers",
+    "heavysleetshowers_and_thunder_day": "heavy sleet showers and thunder",
+    "heavysleetshowers_and_thunder_night": "heavy sleet showers and thunder",
+    "heavysleetshowers_and_thunder_polartwilight": "heavy sleet showers and thunder",
+    "heavysnow": "heavy snow",
+    "heavysnow_and_thunder": "heavy snow and thunder",
+    "heavysnowshowers_day": "heavy snow showers",
+    "heavysnowshowers_night": "heavy snow showers",
+    "heavysnowshowers_polartwilight": "heavy snow showers",
+    "heavysnowshowers_and_thunder_day": "heavy snow showers and thunder",
+    "heavysnowshowers_and_thunder_night": "heavy snow showers and thunder",
+    "heavysnowshowers_and_thunder_polartwilight": "heavy snow showers and thunder",
+    "lightrain": "light rain",
+    "lightrain_and_thunder": "light rain and thunder",
+    "lightrainshowers_day": "light rain showers",
+    "lightrainshowers_night": "light rain showers",
+    "lightrainshowers_polartwilight": "light rain showers",
+    "lightrainshowers_and_thunder_day": "light rain showers and thunder",
+    "lightrainshowers_and_thunder_night": "light rain showers and thunder",
+    "lightrainshowers_and_thunder_polartwilight": "light rain showers and thunder",
+    "lightsleet": "light sleet",
+    "lightsleet_and_thunder": "light sleet and thunder",
+    "lightsleetshowers_day": "light sleet showers",
+    "lightsleetshowers_night": "light sleet showers",
+    "lightsleetshowers_polartwilight": "light sleet showers",
+    "lightsnow": "light snow",
+    "lightsnow_and_thunder": "light snow and thunder",
+    "lightsnowshowers_day": "light snow showers",
+    "lightsnowshowers_night": "light snow showers",
+    "lightsnowshowers_polartwilight": "light snow showers",
+    "lightssleetshowers_and_thunder_day": "light sleet showers and thunder",
+    "lightssleetshowers_and_thunder_night": "light sleet showers and thunder",
+    "lightssleetshowers_and_thunder_polartwilight": "light sleet showers and thunder",
+    "rain": "rain",
+    "rain_and_thunder": "rain and thunder",
+    "rainshowers_day": "rain showers",
+    "rainshowers_night": "rain showers",
+    "rainshowers_polartwilight": "rain showers",
+    "rainshowers_and_thunder_day": "rain showers and thunder",
+    "rainshowers_and_thunder_night": "rain showers and thunder",
+    "rainshowers_and_thunder_polartwilight": "rain showers and thunder",
+    "sleet": "sleet",
+    "sleet_and_thunder": "sleet and thunder",
+    "sleetshowers_day": "sleet showers",
+    "sleetshowers_night": "sleet showers",
+    "sleetshowers_polartwilight": "sleet showers",
+    "snow": "snow",
+    "snow_and_thunder": "snow and thunder",
+    "snowshowers_day": "snow showers",
+    "snowshowers_night": "snow showers",
+    "snowshowers_polartwilight": "snow showers",
+    "wind": "windy"
+};
+
+function getWeatherDescription(symbol) {
+    return weatherSymbolMappings[symbol] || "unknown weather condition";
+};
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+var outputArr = execution.getVariable("Output");
+var firstElement= outputArr[0]; //Get the first element
+
+resultTime = firstElement.time;
+
+//Now
+resultInstantTemparature = firstElement.data.instant.details.air_temperature;
+
+// Predictions
+result_1hrSummary = getWeatherDescription(firstElement.data.next_1_hours.summary.symbol_code);
+result_6hrSummary = getWeatherDescription(firstElement.data.next_6_hours.summary.symbol_code);
+result_12hrSummary = getWeatherDescription(firstElement.data.next_12_hours.summary.symbol_code);
+
+execution.setVariable('varWeatherForecastNow', resultInstantTemparature + ' C');
+execution.setVariable('varWeather1HrSummary', result_1hrSummary );
+execution.setVariable('varWeather6HrSummary', result_6hrSummary );
+execution.setVariable('varWeather12HrSummary', result_12hrSummary );</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_12b96ic" sourceRef="Activity_1qdztrj" targetRef="Activity_1q08on6" />
+    <bpmn:endEvent id="Event_0qceu1n">
+      <bpmn:incoming>Flow_0sumxg8</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0sumxg8" sourceRef="Activity_1q08on6" targetRef="Event_0qceu1n" />
+    <bpmn:serviceTask id="Activity_0hvg171" name="Get Map Position Data" camunda:class="com.ifsworld.fnd.bpa.IfsProjectionDelegate">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="ifsBpaProjectionETagVariableName">ETag</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaProjectionType">Standard</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaProjectionAction">CALL</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaProjectionName">MapPositionAttachmentHandling</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaProjectionCallSignature">GetObjConnResultSet(LuName,KeyRef):Collection(MapPosition)</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaCallReturnValueName">GetObjConnResultSet</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaProjectionParameters">
+            <camunda:map>
+              <camunda:entry key="LuName">JtTask</camunda:entry>
+              <camunda:entry key="KeyRef">TASK_SEQ=${TaskSeq}^</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_10470xc</bpmn:incoming>
+      <bpmn:outgoing>Flow_02h20h5</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:scriptTask id="Activity_07m74xt" name="Get Lat Lon" scriptFormat="JavaScript">
+      <bpmn:incoming>Flow_02h20h5</bpmn:incoming>
+      <bpmn:outgoing>Flow_17ksequ</bpmn:outgoing>
+      <bpmn:script>var coordsArr = execution.getVariable("GetObjConnResultSet");
+var coords= coordsArr [0];
+
+execution.setVariable('varLat', coords.Latitude);
+execution.setVariable('varLon', coords.Longitude);</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_02h20h5" sourceRef="Activity_0hvg171" targetRef="Activity_07m74xt" />
+    <bpmn:serviceTask id="Activity_1e0383b" name="get Weather from https://api.met.no/" camunda:class="com.ifsworld.fnd.bpa.delegate.IfsHttpConnectionDelegate">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="ifsBpaHttpConnectionMethod">GET</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaHttpConnectionUrl">https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${varLat}&amp;lon=${varLon}</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaRestResponseVariableName">weatherResponse</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaRestResponseCheck" />
+          <camunda:inputParameter name="ifsBpaHttpConnectionOutputs">
+            <camunda:map>
+              <camunda:entry key="Output">$.properties.timeseries</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaHttpConnectionHeaders">
+            <camunda:map>
+              <camunda:entry key="Accept">application/json</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaUserHandleResponseCode">301,400,404</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0g5ci4o</bpmn:incoming>
+      <bpmn:outgoing>Flow_0iot9wx</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_10470xc" sourceRef="StartEvent_1" targetRef="Activity_0hvg171" />
+    <bpmn:sequenceFlow id="Flow_17ksequ" sourceRef="Activity_07m74xt" targetRef="Activity_18lj125" />
+    <bpmn:serviceTask id="Activity_18lj125" name="Get Location Data" camunda:class="com.ifsworld.fnd.bpa.delegate.IfsHttpConnectionDelegate">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="ifsBpaHttpConnectionMethod">GET</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaHttpConnectionUrl">https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?location=${varLon},${varLat}&amp;f=json</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaHttpConnectionOutputs">
+            <camunda:map>
+              <camunda:entry key="locationAddr">$.address.Match_addr</camunda:entry>
+              <camunda:entry key="locationCity">$.address.City</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_17ksequ</bpmn:incoming>
+      <bpmn:outgoing>Flow_0g5ci4o</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0iot9wx" sourceRef="Activity_1e0383b" targetRef="Activity_1qdztrj" />
+    <bpmn:sequenceFlow id="Flow_0g5ci4o" sourceRef="Activity_18lj125" targetRef="Activity_1e0383b" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="EL_Get_Weather_Info">
+      <bpmndi:BPMNEdge id="Flow_0g5ci4o_di" bpmnElement="Flow_0g5ci4o">
+        <di:waypoint x="760" y="250" />
+        <di:waypoint x="820" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0iot9wx_di" bpmnElement="Flow_0iot9wx">
+        <di:waypoint x="920" y="250" />
+        <di:waypoint x="980" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_17ksequ_di" bpmnElement="Flow_17ksequ">
+        <di:waypoint x="600" y="250" />
+        <di:waypoint x="660" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10470xc_di" bpmnElement="Flow_10470xc">
+        <di:waypoint x="278" y="250" />
+        <di:waypoint x="350" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02h20h5_di" bpmnElement="Flow_02h20h5">
+        <di:waypoint x="450" y="250" />
+        <di:waypoint x="500" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0sumxg8_di" bpmnElement="Flow_0sumxg8">
+        <di:waypoint x="1240" y="250" />
+        <di:waypoint x="1292" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12b96ic_di" bpmnElement="Flow_12b96ic">
+        <di:waypoint x="1080" y="250" />
+        <di:waypoint x="1140" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="242" y="232" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1y8egr7_di" bpmnElement="Activity_1q08on6">
+        <dc:Bounds x="1140" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0oa4awl_di" bpmnElement="Activity_1qdztrj">
+        <dc:Bounds x="980" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0qceu1n_di" bpmnElement="Event_0qceu1n">
+        <dc:Bounds x="1292" y="232" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1hp65r6_di" bpmnElement="Activity_0hvg171">
+        <dc:Bounds x="350" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_188bg4z_di" bpmnElement="Activity_07m74xt">
+        <dc:Bounds x="500" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1mrm7jc_di" bpmnElement="Activity_1e0383b">
+        <dc:Bounds x="820" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0j0apcg_di" bpmnElement="Activity_18lj125">
+        <dc:Bounds x="660" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
