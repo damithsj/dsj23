@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="sample-diagram" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="C_Perplexity_Company_Verification" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1y6p5h6</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1y6p5h6" sourceRef="StartEvent_1" targetRef="Activity_0accamx" />
+    <bpmn:scriptTask id="Activity_0accamx" name="Variable store" scriptFormat="Javascript">
+      <bpmn:incoming>Flow_1y6p5h6</bpmn:incoming>
+      <bpmn:incoming>Flow_1sic1h4</bpmn:incoming>
+      <bpmn:outgoing>Flow_1w2136q</bpmn:outgoing>
+      <bpmn:script>var companyName = execution.getVariable('CompanyName');
+
+var initConversation_ = 'Welcome! I can help you find information about ' + companyName  +' . What would you like to know?';
+var reply_ = execution.getVariable('AiResponse');
+
+if (!reply_ || reply_.trim() === '') {
+  execution.setVariable('varReply', initConversation_);
+}
+else {
+  execution.setVariable('varReply', reply_  + '\nCan I help you with any other information about the company?');
+  execution.setVariable('FormField_Question', '');
+}
+
+
+</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_1w2136q" sourceRef="Activity_0accamx" targetRef="Activity_0tybpaf" />
+    <bpmn:userTask id="Activity_0tybpaf" name="Chat" camunda:formKey="Chat">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="ifsBpaIsOnlyExplicitParameters">true</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaUserTaskIsHeader">true</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaUserTaskHeaderLocale">
+            <camunda:map>
+              <camunda:entry key="en">Chat Window</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaImplFormField_Reply">
+            <camunda:map>
+              <camunda:entry key="en">AI Assistant</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaImplFormField_Question">
+            <camunda:map>
+              <camunda:entry key="en">Question</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+        <camunda:formData>
+          <camunda:formField id="FormField_Reply" type="string" defaultValue="${varReply}" customAttr="text">
+            <camunda:properties>
+              <camunda:property id="readonly" value="true" />
+              <camunda:property id="isText" value="true" />
+            </camunda:properties>
+          </camunda:formField>
+          <camunda:formField id="FormField_Question" type="string" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1w2136q</bpmn:incoming>
+      <bpmn:outgoing>Flow_1is1qch</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_1is1qch" sourceRef="Activity_0tybpaf" targetRef="Activity_0jas1y3" />
+    <bpmn:scriptTask id="Activity_0jas1y3" name="Prepare search payload" scriptFormat="Javascript">
+      <bpmn:incoming>Flow_1is1qch</bpmn:incoming>
+      <bpmn:outgoing>Flow_0beyyso</bpmn:outgoing>
+      <bpmn:script>var question_ = execution.getVariable('FormField_Question') ;
+
+var companyName_ = execution.getVariable('CompanyName');
+var country_ = execution.getVariable('Country');
+var associationNo_ = execution.getVariable('AssociationNo');
+
+var userQuery = question_  + ' Company name: ' +  companyName_ +
+                            ", Country: " + country_ +  
+                            ", Association Number: " + associationNo_ ;
+
+var payload = {
+  "model": "sonar",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a friendly company information assistant. Rules: (1) Keep answers short and relatable - 1-2 sentences max. (2) Do not add references or citations. (3) Return only the best match. (4) Use newlines for formatting the results. (5) Simple, conversational language."
+    },
+    {
+      "role": "user",
+      "content": userQuery
+    }
+  ]
+};
+
+// Convert to JSON string for the HTTP call
+var payloadJson = JSON.stringify(payload);
+execution.setVariable('perplexityPayload', payloadJson);
+
+// hard coded API key so it can be used in all IFS Cloud versions.
+// You may use REST task configurations to store API keys in 24R2 or later IFS versions
+execution.setVariable('perplexityAuthHeader', 'Bearer ' + 'pplx-USE_YOUR_PERPLEXITY_KEY_HERE');</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_0beyyso" sourceRef="Activity_0jas1y3" targetRef="Activity_07bb6b0" />
+    <bpmn:serviceTask id="Activity_07bb6b0" name="Call Perplexity AI search" camunda:class="com.ifsworld.fnd.bpa.delegate.IfsHttpConnectionDelegate">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="ifsBpaHttpConnectionMethod">POST</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaHttpAuthType">NO_AUTH</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaHttpConnectionUrl">https://api.perplexity.ai/chat/completions</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaHttpConnectionHeaders">
+            <camunda:map>
+              <camunda:entry key="Authorization">${perplexityAuthHeader}</camunda:entry>
+              <camunda:entry key="Content-Type">application/json</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaHttpConnectionBody">${perplexityPayload}</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaRestResponseVariableName">_Response</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaRestResponseCheck" />
+          <camunda:inputParameter name="ifsBpaHttpConnectionOutputs">
+            <camunda:map>
+              <camunda:entry key="PerplexityResponse">choices</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0beyyso</bpmn:incoming>
+      <bpmn:outgoing>Flow_0eqzuuo</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="Event_0hqja56">
+      <bpmn:incoming>Flow_1dgnior</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0eqzuuo" sourceRef="Activity_07bb6b0" targetRef="Activity_13wlepz" />
+    <bpmn:sequenceFlow id="Flow_1dgnior" sourceRef="Activity_13wlepz" targetRef="Event_0hqja56" />
+    <bpmn:scriptTask id="Activity_13wlepz" name="Parse response" scriptFormat="Javascript">
+      <bpmn:incoming>Flow_0eqzuuo</bpmn:incoming>
+      <bpmn:outgoing>Flow_1dgnior</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1sic1h4</bpmn:outgoing>
+      <bpmn:script>var responseObj = JSON.parse(PerplexityResponse);
+
+var responseContent = responseObj[0].message.content;
+
+execution.setVariable('AiResponse', responseContent );
+</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_1sic1h4" sourceRef="Activity_13wlepz" targetRef="Activity_0accamx" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="C_Perplexity_Company_Verification">
+      <bpmndi:BPMNEdge id="Flow_1sic1h4_di" bpmnElement="Flow_1sic1h4">
+        <di:waypoint x="1040" y="290" />
+        <di:waypoint x="1040" y="390" />
+        <di:waypoint x="400" y="390" />
+        <di:waypoint x="400" y="290" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1dgnior_di" bpmnElement="Flow_1dgnior">
+        <di:waypoint x="1090" y="250" />
+        <di:waypoint x="1182" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0eqzuuo_di" bpmnElement="Flow_0eqzuuo">
+        <di:waypoint x="930" y="250" />
+        <di:waypoint x="990" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0beyyso_di" bpmnElement="Flow_0beyyso">
+        <di:waypoint x="770" y="250" />
+        <di:waypoint x="830" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1is1qch_di" bpmnElement="Flow_1is1qch">
+        <di:waypoint x="610" y="250" />
+        <di:waypoint x="670" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1w2136q_di" bpmnElement="Flow_1w2136q">
+        <di:waypoint x="450" y="250" />
+        <di:waypoint x="510" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1y6p5h6_di" bpmnElement="Flow_1y6p5h6">
+        <di:waypoint x="298" y="250" />
+        <di:waypoint x="350" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="262" y="232" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_12uu8bo_di" bpmnElement="Activity_0accamx">
+        <dc:Bounds x="350" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0x7qu78_di" bpmnElement="Activity_0tybpaf">
+        <dc:Bounds x="510" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0z43eld_di" bpmnElement="Activity_0jas1y3">
+        <dc:Bounds x="670" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0m5vj7o_di" bpmnElement="Activity_07bb6b0">
+        <dc:Bounds x="830" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0hqja56_di" bpmnElement="Event_0hqja56">
+        <dc:Bounds x="1182" y="232" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_08tnjf5_di" bpmnElement="Activity_13wlepz">
+        <dc:Bounds x="990" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
